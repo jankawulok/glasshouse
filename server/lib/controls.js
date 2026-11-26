@@ -530,6 +530,14 @@ function doControl(action, value, cb) {
                   function (r) { cb({ ok: !!(r && r.returnValue) }); });
 
     case 'input':
+      if (typeof value === 'string' && /^usbc[1-9][0-9]?$/.test(value) && telemetry) {
+        return telemetry.refreshInputNames(function () {
+          var input = telemetry.usbCInputs()[value];
+          if (!input || !input.appId) return cb({ ok: false, error: msg('srv.usbc.noInput', 'webOS did not report a USB-C input app') });
+          luna('com.webos.applicationManager/launch', { id: input.appId },
+            function (r) { cb({ ok: !!(r && r.returnValue), error: r && r.errorText }); });
+        });
+      }
       if (!inputMap[value]) return cb({ ok: false, error: 'unknown input' });
       return luna('com.webos.applicationManager/launch',
                   { id: names.inputAppId(value) },

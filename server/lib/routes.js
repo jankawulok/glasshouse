@@ -23,6 +23,9 @@ var ha = require('./ha');
 var fetchLib = require('./fetch');
 var devtools = require('./devtools');
 var names = require('./names');
+var usbC = require('./usbc');
+/** @type {ReturnType<typeof usbC.create>} */
+var usbCPolicy = null;
 var nosignal = require('./nosignal');
 
 var HA_CATEGORIES = ha.HA_CATEGORIES;
@@ -2125,6 +2128,30 @@ function handleRequest(req, res) {
     });
   }
 
+  if (pathname === '/api/usb-c' && usbCPolicy) {
+    if (req.method === 'GET') {
+      return telemetryModule.refreshInputNames(function () {
+        var devices = telemetryModule.usbCInputs();
+        var ports = Object.keys(devices).map(function (key) { return devices[key]; });
+        var link = usbCPolicy.status();
+        send(res, 200, JSON.stringify({
+          ok: true, available: ports.length > 0 || link.hubAvailable,
+          writable: !!config.allowControl, inputs: ports, link: link
+        }));
+      });
+    }
+    if (req.method === 'POST') {
+      if (!config.allowControl) {
+        return send(res, 403, JSON.stringify({ ok: false, error: msg('srv.controlsOff', 'controls disabled in config') }));
+      }
+      return readJsonBody(req, res, function (body) {
+        var result = body.retireLegacy === true ? usbCPolicy.retireLegacy() : usbCPolicy.setMode(body.mode);
+        send(res, result.ok ? 200 : 400, JSON.stringify(result));
+      });
+    }
+    return send(res, 405, JSON.stringify({ ok: false, error: 'method not allowed' }));
+  }
+
   if (pathname === '/api/hdmi') {
     return telemetryModule.hdmiInputs(function (r) { send(res, 200, JSON.stringify(r)); });
   }
@@ -2986,6 +3013,7 @@ function handleRequest(req, res) {
 }
 
 function init(opts) {
+  usbCPolicy = opts.usbCPolicy || null;
   opts = opts || {};
   if (opts.config) config = opts.config;
   if (opts.configFile) configFilePath = opts.configFile;

@@ -772,3 +772,17 @@ before closing each page, so pending stats replies cannot outlive the page.
 `test-quickaccess-restore.js` checks that what LG had on a Quick Access key is kept the first time it is changed and only then, that As LG has it puts it back, Quick Help on 9 among them, that restoring puts back every key changed, the owner's own choices included, and that a key changed before anything was kept gets LG's default.
 
 `test-remote-availability.js` checks the lightweight Remote availability route: Quick Access needs one settings read, remote keys are checked only as a fallback, and neither path collects the Apps catalogue or writes settings.
+
+## USB-C on a smart monitor
+
+Run the read-only collector while USB-C is selected.
+
+```sh
+ssh -tt root@MONITOR_IP "$(cat scripts/probe-usb-c.sh)"
+```
+
+Compare EIM's USB-C input application ID against the foreground app. Open
+the USB-C input in the browser dashboard and the TV app. Test Automatic and
+Keep on webOS by changing inputs and by unplugging and reconnecting the
+video cable. With the latter selected, check that a USB peripheral returns
+to webOS after each change and again after a reboot.

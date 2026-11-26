@@ -74,6 +74,7 @@ function renderInputList() {
     let path;
     if (d.tuner) path = t('ctl.liveTv', 'Live TV');
     else if (d.kind === 'dms') path = t('inputs.kind.dms', 'Media server');
+    else if (d.kind === 'usbc') path = t('tab.usbc', 'USB-C');
     else if (d.kind === 'usb') path = t('inputs.kind.usb', 'USB');
     else if (d.kind === 'av') path = t('inputs.kind.av', 'AV');
     else if (d.kind === 'component') path = t('inputs.kind.component', 'Component');

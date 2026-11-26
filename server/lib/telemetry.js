@@ -19,6 +19,7 @@ var hexColor = require('./util').hexColor;
 var path = require('path');
 var execFile = require('child_process').execFile;
 var names = require('./names');
+var usbC = require('./usbc');
 var hdmiLink = require('./hdmilink');
 var audio = require('./audio');
 var power = require('./power');
@@ -205,6 +206,7 @@ var inputNameMap = {};
  * command refused, so its app id there was evidently not com.webos.app.hdmi3.
  */
 var inputAppAliases = {};
+var usbCInputs = {};
 var lastInputScan = 0;
 var installedApps = [];
 // Every app's title by id, hidden ones included: the app list leaves out apps
@@ -1311,9 +1313,25 @@ function refreshInputNames(cb) {
     return;
   }
   lunaFn('com.webos.service.eim/getAllInputStatus', {}, function (res) {
-    if (res && res.devices && res.devices.length) {
+    if (res && Array.isArray(res.devices)) {
+      Object.keys(usbCInputs).forEach(function (key) {
+        delete inputNameMap[key];
+        var appId = usbCInputs[key].appId;
+        if (appId) delete inputAppAliases[names.shortAppId(appId)];
+      });
+      usbCInputs = {};
       for (var i = 0; i < res.devices.length; i++) {
         var d = res.devices[i];
+        if (!d) continue;
+        var usb = usbC.input(d);
+        if (usb) {
+          usbCInputs[usb.key] = usb;
+          if (usb.appId) {
+            inputNameMap[usb.key] = usb.label;
+            inputAppAliases[names.shortAppId(usb.appId)] = usb.key;
+          }
+          continue;
+        }
         var key = names.hdmiKeyForPortId(d.id);
         if (!key) continue;
         var custom = homeModule && typeof homeModule.portName === 'function' ? homeModule.portName(key, d) : null;
@@ -2623,6 +2641,7 @@ module.exports = {
   EMMC_WEAR_PRESENT: EMMC_WEAR_PRESENT,
   HARDWARE_INFO: HARDWARE_INFO,
   inputNameMap: inputNameMap,
+  usbCInputs: function () { return usbCInputs; },
   inputKey: inputKey,
   init: init,
   meminfo: meminfo,

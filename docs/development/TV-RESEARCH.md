@@ -4139,3 +4139,25 @@ On a B8 (OLED65B8SLC, webOS 4.4.3), no filter names a channel key (only
 can name them. With CH+ set to open the browser, a CH+ press written to the
 remote's input device (`LGE RCU`, event1) brought the browser to the front over
 HDMI 2; set back to As LG has it, the same press left HDMI 2 in front.
+
+## USB-C on the 32SR83U-W smart monitor
+
+The 32SR83U-W on firmware 03.33.30 (webOS 8.3, Linux
+5.4.96-132.nbr4tv.42) identifies `USB-C_1` in its default PC input labels.
+The input selector uses EIM's live ID and launch app, so the PC label alone
+does not make an unverified app launchable.
+
+In the copied ARM64 kernel, `get_switch_port` returns the stored
+`g_switch_port_state`. `do_usb_hub_switch_logic` changes the mux through its
+downstream and upstream enable functions without updating that variable.
+Consequently a read of `1` does not establish where the hub is routed.
+Writing `1` reapplies the route to webOS. An earlier live kprobe on these
+paths froze the monitor. Further work should use the EIM and sysfs reads.
+
+The connected M1 Mac reported 3840 × 2160 at 60 Hz, with
+`SupportsVariableRefreshRate=false` in the saved display data. The firmware
+has DP Adaptive-Sync code and DPRX status, DPCD, SDP and debug control
+attributes. This does not establish a working VRR mode on the panel. The
+EDID declares wide gamut chromaticities, while the Expert SDR processing
+gamut remains unmeasured. Both luminance and volume reads via m1ddc failed
+with an IOKit communication error. No DDC/CI write was attempted.

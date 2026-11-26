@@ -1162,6 +1162,7 @@ pointer.init({ luna: luna, hasService: lunaTransport.hasService, config: CONFIG,
   onActivity: function () { screensavers.pointerUsed(); },
   authed: function (req) { return routes.authed(url.parse(req.url || '/', true).query, req); } });
 routes.init({
+  usbCPolicy: require('./lib/usbc').create(path.join(path.dirname(CONFIG_FILE), 'usb-c.json'), CONFIG.allowControl),
   config: CONFIG,
   audioLevels: audioLevels,
   pointer: pointer,

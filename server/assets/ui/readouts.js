@@ -622,27 +622,28 @@ async function tick() {
     }
     q('mute').classList.toggle('on', muted);
 
-    if (d.inputs && !q('inputs').dataset.built) {
+    const inputSignature = d.inputs && JSON.stringify(d.inputs);
+    if (inputSignature && q('inputs').dataset.built !== inputSignature) {
       const inKeys = Object.keys(d.inputs);
       const totalInputs = inKeys.length + 1;
       const liveTvClass = (totalInputs % 2 !== 0) ? ' class="span-center"' : '';
       q('inputs').innerHTML = inKeys.map(k =>
         `<button id="in_${esc(k)}" onclick="sendCommand('input','${jsq(k)}')"><span class="lbl" title="${esc(d.inputs[k])}">${esc(d.inputs[k])}</span></button>`).join('') +
         `<button id="in_livetv"${liveTvClass} onclick="sendCommand('input','livetv')"><span class="lbl" title="${esc(t('ctl.liveTv', 'Live TV'))}">${esc(t('ctl.liveTv', 'Live TV'))}</span></button>`;
-      q('inputs').dataset.built = '1';
+      q('inputs').dataset.built = inputSignature;
     }
 
     const inLeased = getLease('input', d.app);
     const activeApp = inLeased !== undefined ? inLeased : d.app;
     const srcBtn = q('source'), srcMenu = q('source-menu');
     if (srcBtn && srcMenu) {
-      if (d.inputs && !srcMenu.dataset.built) {
+      if (inputSignature && srcMenu.dataset.built !== inputSignature) {
         const inKeys = Object.keys(d.inputs);
         srcMenu.innerHTML = inKeys.map(k =>
           `<button type="button" role="menuitem" data-src-in="${esc(k)}" onclick="pickSourceInput('${jsq(k)}')"><span>${esc(d.inputs[k])}</span></button>`
         ).join('') +
           `<button type="button" role="menuitem" data-src-in="livetv" onclick="pickSourceInput('livetv')"><span>${esc(t('ctl.liveTv', 'Live TV'))}</span></button>`;
-        srcMenu.dataset.built = '1';
+        srcMenu.dataset.built = inputSignature;
       }
       const canSwitch = !!(d.inputs && !asleep && !isComp);
       srcBtn.classList.toggle('has-menu', canSwitch);

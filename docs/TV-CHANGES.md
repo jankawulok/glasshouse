@@ -290,3 +290,18 @@ Control page also has quick toggles below Playback, using the same commands and
 write permissions. Both dashboards hide the Ambient Light tab when neither
 integration is available; saved links then open Control on the web or Metrics
 in the TV app.
+
+## USB-C hub routing
+
+The USB-C video selector launches the application ID supplied by LG's input
+manager. The optional hub override writes `1` to
+`/sys/devices/platform/1805e000.usb_hub/switch_port` once per second while the
+server runs with controls enabled. The policy is saved as
+`/var/lib/tvweb/usb-c.json`. Automatic stops the writes.
+
+Retiring the previous watcher moves
+`/var/lib/webosbrew/init.d/60-usb-hub-webos` to
+`/var/lib/webosbrew/60-usb-hub-webos.before-glasshouse` and stops the process
+when its PID and arguments identify that watcher. Move that file back into
+`init.d` and reboot to restore the previous hook. The diagnostics only read
+sysfs. Glasshouse makes no changes to DisplayPort capabilities or firmware.

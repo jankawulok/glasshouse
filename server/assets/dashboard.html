@@ -424,6 +424,7 @@ var TABS = [
   { key: 'oled',    label: t('tab.oledCare', 'OLED Care'),    url: '/api/oledcare',    build: oledRows, optional: true },
   { key: 'game',    label: t('tab.game', 'Game'),         url: '/api/game',        build: gameRows, optional: true },
   { key: 'picture', label: t('tab.picture', 'Picture'),      url: '/api/picture',     build: pictureRows, poll: 5000, optional: true },
+  { key: 'usbc',    label: t('tab.usbc', 'USB-C'), url: '/api/usb-c', build: usbCRows, optional: true, poll: 5000 },
   { key: 'audio',   label: t('tab.audio', 'Audio'),        url: '/api/audio?with=settings', build: audioRows, poll: 8000 },
   { key: 'ambient', label: t('adv.ambient', 'Ambient Light'), url: '/api/stats', build: ambientRows, poll: 5000, optional: true },
   { key: 'saver',   label: t('tv.tab.screenSaver', 'Screen Saver'), url: '/api/screensaver', build: saverRows, optional: true },
@@ -2354,6 +2355,31 @@ function pushAdjust(r) {
  * settings belong to, then LG's picture settings in the groups of its menu.
  * Only the settings this TV reports come back.
  */
+function usbCRows(d) {
+  if (!d || !d.available) return [];
+  var link = d.link;
+  var rows = [];
+  if (d.inputs.length) rows.push(head(t('usbc.video', 'Video input')));
+  d.inputs.forEach(function (input) {
+    rows.push({ label: input.label, key: input.key, act: d.writable && input.appId ? 'usbCInput' : null,
+      value: input.connected === null ? '' : input.connected ? t('usbc.connected', 'Connected') : t('usbc.disconnected', 'Disconnected'),
+      press: t('usbc.select', 'Select input') });
+  });
+  if (link.hubAvailable) {
+    rows.push(head(t('usbc.hub', 'USB hub routing')));
+    if (link.legacyWatcher) {
+      rows.push({ label: t('usbc.retire', 'Retire previous watcher'), act: d.writable ? 'usbCRetire' : null,
+        hint: t('usbc.legacy', 'Another USB watcher is installed. Retire it so Glasshouse can manage routing.') });
+    }
+    rows.push({ label: t('usbc.mode', 'Routing policy'), act: d.writable && !link.legacyWatcher ? 'usbCMode' : null,
+      value: link.mode === 'webos' ? t('usbc.keep', 'Keep on webOS') : t('usbc.automatic', 'Automatic'),
+      next: link.mode === 'webos' ? 'automatic' : 'webos',
+      hint: t('usbc.hubDesc', 'Automatic leaves routing to the monitor. Keep on webOS restores the hub after an input change. USB devices may briefly disconnect.') });
+    if (link.issue === 'write') rows.push({ label: t('usbc.write', 'Glasshouse could not restore the USB hub route.') });
+  }
+  return rows;
+}
+
 function pictureRows(d) {
   if (!d) return [];
   if (d.ok === false) return [{ label: t('tv.pic.readFailed', 'Picture settings unavailable'), value: '',
@@ -3844,6 +3870,12 @@ function activate() {
     case 'huesyncAdjust':
     case 'lgAdjust':
       return startAdjust();
+    case 'usbCInput':
+      return send({ action: 'input', value: r.key });
+    case 'usbCMode':
+      return sendPost('/api/usb-c', { mode: r.next });
+    case 'usbCRetire':
+      return sendPost('/api/usb-c', { retireLegacy: true });
     case 'lgValue':
       return send({ action: 'lgSetting', value: { id: r.key, value: r.next } });
     case 'lgSetting':
