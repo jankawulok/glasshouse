@@ -50,6 +50,26 @@ function typecPorts() {
   });
 }
 
+function receiverStatus() {
+  var raw = util.readTrimmed(path.join(DPRX, 'status')) ||
+    util.readTrimmed('/sys/devices/platform/dprx/status');
+  var connected = /DP\[\d+\] STATUS \(connect=([01])\)/.exec(raw || '');
+  var video = /^VIDEO\s*:.*?h_act=(\d+), v_act=(\d+).*?actual_vfreq=(\d+(?:\.\d+)?)/m.exec(raw || '');
+  var colour = /^PIXEL\s*: color_space=([^,]+), depth=(\d+) bits, colorimetry=([^,]+), dynamic_range=([^,]+)/m.exec(raw || '');
+  var link = /^Link\s*: lane=(\d+), link_rate=(\d+)/m.exec(raw || '');
+  var refresh = /^DRR\s*:\s*(.+?)\s*\((\d+)\)\s*$/m.exec(raw || '');
+  return {
+    raw: raw,
+    signal: connected && connected[1] === '1' && video && Number(video[1]) && Number(video[2]) && Number(video[3]) ? {
+      width: Number(video[1]), height: Number(video[2]), hz: Number(video[3]),
+      encoding: colour ? colour[1] : null, bits: colour ? Number(colour[2]) : null,
+      colorimetry: colour ? colour[3] : null, range: colour ? colour[4] : null,
+      lanes: link ? Number(link[1]) : null, laneGbps: link ? Number(link[2]) / 100 : null,
+      refreshMode: refresh ? refresh[1] : null, fixedRefresh: refresh ? refresh[2] === '0' : null
+    } : null
+  };
+}
+
 function legacyPid() {
   var pid = util.readTrimmed(LEGACY_PID);
   if (!/^[1-9][0-9]*$/.test(pid || '')) return null;
@@ -144,14 +164,15 @@ function create(stateFile, allowControl) {
     setMode: setMode,
     retireLegacy: retireLegacy,
     status: function () {
+      var receiver = receiverStatus();
       return {
         hubAvailable: fs.existsSync(HUB),
         legacyWatcher: fs.existsSync(LEGACY) || !!legacyPid(),
         mode: mode,
         issue: issue,
         lastManualValue: util.readTrimmed(HUB),
-        receiver: util.readTrimmed(path.join(DPRX, 'status')) ||
-          util.readTrimmed('/sys/devices/platform/dprx/status'),
+        receiver: receiver.raw,
+        signal: receiver.signal,
         typecPorts: typecPorts()
       };
     }

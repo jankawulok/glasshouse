@@ -86,7 +86,8 @@ input or cable event. If the earlier USB hub boot hook is installed, use
 **Retire previous watcher** before setting a policy. Glasshouse keeps the
 previous hook outside the boot directory.
 
-The browser tab's **Link diagnostics** show the DisplayPort receiver status
-and Type-C roles when the corresponding kernel interfaces are present. Use
+The **Link diagnostics** show the incoming resolution, refresh rate and
+colour format when the DisplayPort receiver reports them. The browser tab
+also shows the lane rate, Type-C roles and raw receiver status. Use
 the existing **Picture** and **Audio** tabs for settings that webOS exposes
 while USB-C is selected.

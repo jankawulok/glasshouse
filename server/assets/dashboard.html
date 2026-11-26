@@ -2377,6 +2377,15 @@ function usbCRows(d) {
       hint: t('usbc.hubDesc', 'Automatic leaves routing to the monitor. Keep on webOS restores the hub after an input change. USB devices may briefly disconnect.') });
     if (link.issue === 'write') rows.push({ label: t('usbc.write', 'Glasshouse could not restore the USB hub route.') });
   }
+  var signal = link.signal;
+  if (signal) {
+    rows.push(head(t('usbc.diagnostics', 'Link diagnostics')));
+    var detail = signal.encoding && signal.bits ? [t('usbc.pixel', '{encoding}, {bits}-bit', signal)] : [];
+    if (signal.colorimetry) detail.push(signal.colorimetry);
+    if (signal.range) detail.push(signal.range);
+    rows.push({ label: t('usbc.timing', '{width} × {height} at {hz} Hz', signal), value: detail.join(' · '),
+      hint: signal.fixedRefresh ? t('usbc.fixed', 'Fixed refresh rate') : signal.refreshMode });
+  }
   return rows;
 }
 

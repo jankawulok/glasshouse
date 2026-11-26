@@ -4167,3 +4167,10 @@ with an IOKit communication error. No DDC/CI write was attempted.
 Type-C sysfs reported a partner, USB Power Delivery mode, and selected roles
 `sink` and `device`. The power supply class was empty, so it provides no
 voltage, current or power readings for this port.
+
+While the M1 Mac was selected, the receiver reported four HBR2 lanes,
+3840 × 2160 at 60 Hz, 8-bit full-range RGB and sRGB colorimetry. The active
+stream was SDR. DRR reported fixed refresh and the Adaptive-Sync SDP
+counter was zero. The DPCD link configuration reported HBR2, and the
+receiver's debug controls expose a maximum link-rate override and
+FreeSync packet logging. Neither field enables VRR or DDC/CI.

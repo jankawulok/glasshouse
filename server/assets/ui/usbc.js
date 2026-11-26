@@ -46,7 +46,21 @@ function renderUsbC(data) {
   if (link.lastManualValue !== null) portLines.push(t('usbc.lastManual', 'Last manual switch value: {value}', {
     value: link.lastManualValue
   }));
-  if (link.receiver) portLines.push(link.receiver);
+  const signal = link.signal;
+  q('usbc-signal').hidden = !signal;
+  if (signal) {
+    const summary = [t('usbc.timing', '{width} × {height} at {hz} Hz', signal)];
+    if (signal.encoding && signal.bits) summary.push(t('usbc.pixel', '{encoding}, {bits}-bit', signal));
+    if (signal.colorimetry) summary.push(signal.colorimetry);
+    if (signal.range) summary.push(signal.range);
+    if (signal.lanes && signal.laneGbps) summary.push(t('usbc.lanes', '{lanes} lanes at {laneGbps} Gbit/s each', signal));
+    if (signal.refreshMode) summary.push(signal.fixedRefresh
+      ? t('usbc.fixed', 'Fixed refresh rate') : signal.refreshMode);
+    q('usbc-signal').textContent = summary.join(' · ');
+  }
+  q('usbc-receiver-details').hidden = !link.receiver;
+  q('usbc-receiver').textContent = link.receiver || '';
+  q('usbc-link').hidden = !portLines.length && !!link.receiver;
   q('usbc-link').textContent = portLines.join('\n\n') ||
     t('usbc.noDiagnostics', 'No USB-C receiver or power data was reported.');
 }

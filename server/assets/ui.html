@@ -1384,7 +1384,12 @@
   <div class="tab-grp" id="usbc-diagnostics" hidden>
     <div class="pv-sec" data-t="usbc.diagnostics">Link diagnostics</div>
     <p class="pv-sub" data-t="usbc.powerHint">Power role and mode describe the USB-C connection. They do not measure watts.</p>
+    <p id="usbc-signal" class="pv-sub" hidden></p>
     <pre id="usbc-link" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
+    <details id="usbc-receiver-details" hidden>
+      <summary data-t="usbc.rawReceiver">Raw receiver status</summary>
+      <pre id="usbc-receiver" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
+    </details>
     <button type="button" class="pill" id="usbc-refresh" data-t="usbc.refresh">Refresh diagnostics</button>
   </div>
 </section>

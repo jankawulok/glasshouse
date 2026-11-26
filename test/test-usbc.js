@@ -33,6 +33,13 @@ controls.doControl('input', 'usbc1', function (result) { launched = result.ok; }
 assert.strictEqual(launched, true);
 controls.doControl('input', 'usbc2', function (result) { assert.strictEqual(result.ok, false); });
 
+var receiver = [
+  '---------------- DP[0] STATUS (connect=1)--------------',
+  'Link  : lane=4, link_rate=540, channel_coding=0, fec=0, scr=1, ch_align=1',
+  'VIDEO : h_total=4400, v_total=2250, h_act=3840, v_act=2160, h_freq=13504, v_freq=60.0 /(actual_vfreq=60.0), interlace=0',
+  'PIXEL : color_space=RGB, depth=8 bits, colorimetry=SRGB, dynamic_range=VESA Range(Full), content_type=Not Defined',
+  'DRR   : Fix Refresh Rate (0)'
+].join('\n');
 var writes = 0;
 var restoreRoute = null;
 var persisted = '{}';
@@ -54,7 +61,7 @@ var mock = {
     if (name === './util') return {
       readTrimmed: function (key) {
         if (key === hub) return '1';
-        if (key === '/sys/class/misc/rtk_dprx/status') return 'DisplayPort receiver status';
+        if (key === '/sys/class/misc/rtk_dprx/status') return receiver;
         if (key === '/sys/class/typec/port0/power_role') return 'source [sink]';
         if (key === '/sys/class/typec/port0/data_role') return 'host [device]';
         return null;
@@ -79,7 +86,17 @@ var policy = mock.exports.create(file, true);
 assert.strictEqual(policy.setMode('webos').ok, true);
 var beforeSwitch = writes;
 assert.strictEqual(policy.status().lastManualValue, '1');
-assert.strictEqual(policy.status().receiver, 'DisplayPort receiver status');
+assert.strictEqual(policy.status().receiver, receiver);
+var signal = policy.status().signal;
+assert.strictEqual(signal.width, 3840);
+assert.strictEqual(signal.height, 2160);
+assert.strictEqual(signal.hz, 60);
+assert.strictEqual(signal.bits, 8);
+assert.strictEqual(signal.laneGbps, 5.4);
+assert.strictEqual(signal.range, 'VESA Range(Full)');
+assert.strictEqual(signal.fixedRefresh, true);
+receiver = receiver.replace('connect=1', 'connect=0');
+assert.strictEqual(policy.status().signal, null);
 assert.strictEqual(policy.status().typecPorts[0].powerRole, 'sink');
 assert.strictEqual(policy.status().typecPorts[0].dataRole, 'device');
 restoreRoute();
