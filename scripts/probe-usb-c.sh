@@ -19,10 +19,12 @@ luna-send -n 1 luna://com.webos.service.config/getConfigs '{"configNames":["tv.m
 
 printf '\nUSB hub, receiver, Type-C and power inventory\n'
 ls -l /sys/devices/platform/1805e000.usb_hub/ /sys/devices/platform/dprx/ \
-    /sys/class/misc/rtk_dprx/ /sys/class/typec/ /sys/class/power_supply/ 2>/dev/null
+    /sys/class/misc/rtk_dprx/ /sys/devices/platform/rtk_typec/ \
+    /sys/class/typec/ /sys/class/typec/port0/ /sys/class/typec/port0-partner/ /sys/class/power_supply/ 2>/dev/null
 for f in /sys/devices/platform/1805e000.usb_hub/switch_port \
-    /sys/devices/platform/dprx/status /sys/devices/platform/dprx/dpcd \
-    /sys/devices/platform/dprx/sdp /sys/devices/platform/dprx/debug_ctrl \
+    /sys/class/misc/rtk_dprx/status /sys/class/misc/rtk_dprx/dpcd \
+    /sys/class/misc/rtk_dprx/sdp /sys/class/misc/rtk_dprx/debug_ctrl \
+    /sys/class/misc/rtk_dprx/ver_info \
     /sys/class/typec/port*/power_role /sys/class/typec/port*/data_role \
     /sys/class/typec/port*/power_operation_mode \
     /sys/class/power_supply/*/type /sys/class/power_supply/*/voltage_now \

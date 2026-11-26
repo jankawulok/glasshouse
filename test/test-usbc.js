@@ -7,7 +7,7 @@ var usbC = require('../server/lib/usbc');
 var telemetry = require('../server/lib/telemetry');
 var controls = require('../server/lib/controls');
 
-var device = { id: 'USB-C_1', label: 'USB-C laptop', connected: true, appId: 'com.webos.app.externalinput.usbc1' };
+var device = { id: 'USB-C_1', label: 'PC', connected: true, appId: 'com.webos.app.usbc1' };
 telemetry.init({ luna: function (uri, params, cb) {
   if (uri !== 'com.webos.service.eim/getAllInputStatus') return cb(null);
   cb({ devices: [{ id: 'HDMI_1' }, device, { id: 'USB_1' }] });
@@ -23,7 +23,7 @@ controls.init({
   }
 });
 telemetry.refreshInputNames(function (inputs) {
-  assert.deepEqual(inputs, { hdmi1: 'HDMI 1', usbc1: device.label });
+  assert.deepEqual(inputs, { hdmi1: 'HDMI 1', usbc1: 'USB-C (PC)' });
   assert.strictEqual(telemetry.inputKey(device.appId), 'usbc1');
 });
 assert.strictEqual(usbC.input({ id: 'USB_1' }), null);
@@ -42,7 +42,8 @@ var mock = {
   exports: {},
   require: function (name) {
     if (name === 'fs') return {
-      existsSync: function (key) { return key === hub; },
+      existsSync: function (key) { return key === hub || key === '/sys/class/typec/port0-partner'; },
+      readdirSync: function () { return ['port0', 'port0-partner']; },
       readFileSync: function () { return persisted; },
       writeFileSync: function (key, data) {
         assert.strictEqual(key, hub);
@@ -51,7 +52,13 @@ var mock = {
       }
     };
     if (name === './util') return {
-      readTrimmed: function (key) { return key === hub ? '1' : null; },
+      readTrimmed: function (key) {
+        if (key === hub) return '1';
+        if (key === '/sys/class/misc/rtk_dprx/status') return 'DisplayPort receiver status';
+        if (key === '/sys/class/typec/port0/power_role') return 'source [sink]';
+        if (key === '/sys/class/typec/port0/data_role') return 'host [device]';
+        return null;
+      },
       writeJsonAtomic: function (key, value) {
         assert.strictEqual(key, file);
         persisted = JSON.stringify(value);
@@ -72,6 +79,9 @@ var policy = mock.exports.create(file, true);
 assert.strictEqual(policy.setMode('webos').ok, true);
 var beforeSwitch = writes;
 assert.strictEqual(policy.status().lastManualValue, '1');
+assert.strictEqual(policy.status().receiver, 'DisplayPort receiver status');
+assert.strictEqual(policy.status().typecPorts[0].powerRole, 'sink');
+assert.strictEqual(policy.status().typecPorts[0].dataRole, 'device');
 restoreRoute();
 assert.strictEqual(writes, beforeSwitch + 1, 'a cached 1 must never suppress the restore');
 assert.strictEqual(mock.exports.create(file, false).status().mode, 'webos');

@@ -5,7 +5,7 @@ var util = require('./util');
 var msg = require('./say').msg;
 
 var HUB = '/sys/devices/platform/1805e000.usb_hub/switch_port';
-var DPRX = '/sys/devices/platform/dprx';
+var DPRX = '/sys/class/misc/rtk_dprx';
 var TYPEC = '/sys/class/typec';
 var LEGACY = '/var/lib/webosbrew/init.d/60-usb-hub-webos';
 var LEGACY_PID = '/tmp/usb-hub-webos.pid';
@@ -16,12 +16,23 @@ function input(device) {
   if (!port) return null;
   var appId = typeof device.appId === 'string' && /^[a-z0-9]+(?:[.-][a-z0-9]+)+$/i.test(device.appId)
     ? device.appId : null;
+  var label = typeof device.label === 'string' ? device.label.trim() : '';
+  var connector = 'USB-C' + (port[1] && port[1] !== '1' ? ' ' + port[1] : '');
+  if (!label || /^USB[-_ ]?C(?:[-_ ]?\d+)?$/i.test(label)) label = connector;
+  else label = connector + ' (' + label + ')';
   return {
     key: 'usbc' + (port[1] || '1'),
     appId: appId,
-    label: device.label || 'USB-C',
+    label: label,
     connected: typeof device.connected === 'boolean' ? device.connected : null
   };
+}
+
+// Linux lists the selected role in brackets when the port is dual role.
+function selectedRole(file) {
+  var value = util.readTrimmed(file);
+  var selected = /\[([^\]]+)\]/.exec(value || '');
+  return selected ? selected[1] : value;
 }
 
 function typecPorts() {
@@ -32,8 +43,8 @@ function typecPorts() {
     return {
       port: name,
       partner: fs.existsSync(path.join(TYPEC, name + '-partner')),
-      dataRole: util.readTrimmed(path.join(dir, 'data_role')),
-      powerRole: util.readTrimmed(path.join(dir, 'power_role')),
+      dataRole: selectedRole(path.join(dir, 'data_role')),
+      powerRole: selectedRole(path.join(dir, 'power_role')),
       powerMode: util.readTrimmed(path.join(dir, 'power_operation_mode'))
     };
   });
@@ -139,7 +150,8 @@ function create(stateFile, allowControl) {
         mode: mode,
         issue: issue,
         lastManualValue: util.readTrimmed(HUB),
-        receiver: util.readTrimmed(path.join(DPRX, 'status')),
+        receiver: util.readTrimmed(path.join(DPRX, 'status')) ||
+          util.readTrimmed('/sys/devices/platform/dprx/status'),
         typecPorts: typecPorts()
       };
     }
