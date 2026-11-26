@@ -69,3 +69,24 @@ On TVs where **Glasshouse Input bar** cannot be offered (for example, **webOS 3*
 * **Your inputs** still appears if you have enabled [Glasshouse Home](home.md), [Glasshouse Minimal](home.md#glasshouse-minimal), or a [Custom](home.md#custom-launcher) launcher on the **Home** tab, so you can rename, reorder, and hide inputs there.
 * **No Signal screen** appears if supported on your webOS version.
 * If none of those sections apply (for instance, **LG Home** is active on webOS 11), the tab simply states: *"Nothing about this TV’s inputs can be changed from here."*
+
+## USB-C
+
+The **USB-C** tab is available in the browser dashboard and the TV app when
+webOS reports a USB-C video port or Glasshouse finds the supported USB hub
+control. Select the video input here, from the browser dashboard's source
+selector, or from the Glasshouse Input bar and Home. Glasshouse uses the app
+ID reported by webOS for that port.
+
+On a supported LG smart monitor, **Keep on webOS** restores the hub to the
+monitor after an input change. The choice is saved across restarts. LG can
+still switch the hub briefly and connected devices can disconnect during that
+interval. **Automatic** stops the override. LG controls the route on the next
+input or cable event. If the earlier USB hub boot hook is installed, use
+**Retire previous watcher** before setting a policy. Glasshouse keeps the
+previous hook outside the boot directory.
+
+The browser tab's **Link diagnostics** show the DisplayPort receiver status
+and Type-C roles when the corresponding kernel interfaces are present. Use
+the existing **Picture** and **Audio** tabs for settings that webOS exposes
+while USB-C is selected.

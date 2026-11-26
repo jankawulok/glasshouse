@@ -4139,3 +4139,31 @@ On a B8 (OLED65B8SLC, webOS 4.4.3), no filter names a channel key (only
 can name them. With CH+ set to open the browser, a CH+ press written to the
 remote's input device (`LGE RCU`, event1) brought the browser to the front over
 HDMI 2; set back to As LG has it, the same press left HDMI 2 in front.
+
+## USB-C on the 32SR83U-W smart monitor
+
+The 32SR83U-W on firmware 03.33.30 (webOS 8.3, Linux
+5.4.96-132.nbr4tv.42) reports `USB-C_1` with label `PC` and app ID
+`com.webos.app.usbc1` in EIM. That app also reports as the foreground
+application while USB-C is selected. Only one USB-C input is reported,
+although both `usbc1` and `usbc2` app directories exist.
+
+In the copied ARM64 kernel, `get_switch_port` returns the stored
+`g_switch_port_state`. `do_usb_hub_switch_logic` changes the mux through its
+downstream and upstream enable functions without updating that variable.
+Consequently a read of `1` does not establish where the hub is routed.
+Writing `1` reapplies the route to webOS. An earlier live kprobe on these
+paths froze the monitor. Further work should use the EIM and sysfs reads.
+
+The connected M1 Mac reported 3840 × 2160 at 60 Hz, with
+`SupportsVariableRefreshRate=false` in the saved display data. The firmware
+has DP Adaptive-Sync code and exposes status, DPCD, SDP and debug control
+under `/sys/class/misc/rtk_dprx`. This does not establish a working VRR mode
+on the panel. LG's settings service returned `colorGamut: native` for
+USB-C Expert SDR (`expert1`) and the active SDR Filmmaker mode. The EDID
+declares wide gamut chromaticities. The panel's actual gamut is unmeasured. Both luminance and volume reads via m1ddc failed
+with an IOKit communication error. No DDC/CI write was attempted.
+
+Type-C sysfs reported a partner, USB Power Delivery mode, and selected roles
+`sink` and `device`. The power supply class was empty, so it provides no
+voltage, current or power readings for this port.

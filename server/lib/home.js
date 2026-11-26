@@ -29,6 +29,7 @@ var path = require('path');
 var execFile = require('child_process').execFile;
 var msg = require('./say').msg;
 var names = require('./names');
+var usbC = require('./usbc');
 var writeJsonAtomic = require('./util').writeJsonAtomic;
 var wallpapers = require('./home-wallpapers');
 var takeover = require('./home-takeover');
@@ -1646,6 +1647,12 @@ function analogInput(d) {
 function listDevices(devs, portsPlugged) {
   var out = [];
   devs.forEach(function (d) {
+    var usb = usbC.input(d);
+    if (usb && usb.appId) {
+      out.push({ id: usb.key, name: usb.label, input: usb.key, kind: 'usbc', appId: usb.appId,
+                 port: 0, via: null, address: null, unused: usb.connected === false });
+      return;
+    }
     var analog = analogInput(d);
     if (analog) return out.push(analog);
     var m = d && typeof d.id === 'string' && /^HDMI_(\d)$/.exec(d.id);
